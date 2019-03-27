@@ -6,5 +6,6 @@ import * as functions from 'firebase-functions';
  * A slack message will be sent us to notify that a Talk has been proposed.
  */
 export const send = async (snap: FirebaseFirestore.DocumentSnapshot, context: functions.EventContext) => {
+
     //TODO: implementation
 }

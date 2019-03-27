@@ -1,4 +1,12 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionId": "gifstore",
+      "fields": [
+        { "fieldPath": "isActive", "mode": "ASCENDING" },
+        { "fieldPath": "lastUsed", "mode": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

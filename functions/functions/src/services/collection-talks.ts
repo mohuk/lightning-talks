@@ -2,30 +2,26 @@ import * as firestore from './firestore';
 import * as datetime from './datetime';
 import { Talk } from '../classes/talk';
 import { Timestamp } from '@google-cloud/firestore';
-import * as constants from '../constants';
 import * as firconstants from '../constants/firestore';
 
-/** Get a Ligthing Talks that is upcoming in 1 working day */
-export const getNextDayTalk = async (): Promise<Talk> => {
+/** Get a Lightning Talks that is upcoming in 1 working day. */
+export const getNextDayTalk = async (): Promise<Talk | undefined> => {
 
     try {
         const currentWorkingTimeStamp: Timestamp = Timestamp.fromDate(new Date());
         const twoDaysLaterWorkingTimestamp: Timestamp = Timestamp.fromDate(datetime.getNextWork(new Date()));
-        const collectionRef = await firestore.getCollectionReference(firconstants.collectionTalks);
-        const snapshot = await collectionRef.where(firconstants.filterDateSchedule, firconstants.queryGreater, currentWorkingTimeStamp)
-            .where(firconstants.filterDateSchedule, firconstants.queryGreater, twoDaysLaterWorkingTimestamp)
+        const collectionRef = firestore.getCollectionReference(firconstants.collectionTalks);
+        const snapshot = await collectionRef.where('dateSchedule', firconstants.queryGreater, currentWorkingTimeStamp)
+            .where('dateSchedule', firconstants.queryLesser, twoDaysLaterWorkingTimestamp)
             .limit(1)
             .get();
 
         if (snapshot.empty) {
-            throw new Error(constants.messageNoRecords);
+            return undefined;
         }
 
         const document = snapshot.docs[0];
-        const talk: Talk = new Talk(document.get('id'), document.get('talkTitle'), document.get('speakerNameList'), document.get('speakerEmailList'),
-            document.get('talkExcerpt'), document.get('dateSubmission'), document.get('dateTentative'), document.get('dateSchedule'), document.get('dateModified'),
-            document.get('urlPresentation'), document.get('urlVideo'), document.get('dislikeCount'), document.get('dislikeList'), document.get('likeCount'),
-            document.get('likeList'), document.get('isSpecialTalk'), document.get('isActive'));
+        const talk: Talk = Talk.snapshotToObject(document);
 
         return talk;
     }
@@ -34,24 +30,21 @@ export const getNextDayTalk = async (): Promise<Talk> => {
     }
 }
 
-/** Get all active Ligthing Talks */
-export const getAllActiveTalks = async (): Promise<Talk[] | string> => {
+/** Get all active Lightning Talks. */
+export const getAllActiveTalks = async (): Promise<Talk[] | undefined> => {
 
     try {
-        const collectionRef = await firestore.getCollectionReference(firconstants.collectionTalks);
-        const snapshot = await collectionRef.where(firconstants.filterIsActive, firconstants.queryEquals, true).get();
+        const collectionRef = firestore.getCollectionReference(firconstants.collectionTalks);
+        const snapshot = await collectionRef.where('isActive', firconstants.queryEquals, true).get();
 
         if (snapshot.empty) {
-            throw new Error(constants.messageNoRecords);
+            return undefined;
         }
 
         const talks: Talk[] = [];
 
-        snapshot.forEach((doc) => {
-            const talk: Talk = new Talk(doc.get('id'), doc.get('talkTitle'), doc.get('speakerNameList'), doc.get('speakerEmailList'),
-                doc.get('talkExcerpt'), doc.get('dateSubmission'), doc.get('dateTentative'), doc.get('dateSchedule'), doc.get('dateModified'),
-                doc.get('urlPresentation'), doc.get('urlVideo'), doc.get('dislikeCount'), doc.get('dislikeList'), doc.get('likeCount'),
-                doc.get('likeList'), doc.get('isSpecialTalk'), doc.get('isActive'));
+        snapshot.forEach((document) => {
+            const talk: Talk = Talk.snapshotToObject(document);
             talks.push(talk);
         });
 
@@ -60,4 +53,11 @@ export const getAllActiveTalks = async (): Promise<Talk[] | string> => {
     catch (err) {
         return err;
     }
+}
+
+/** Submit a Lightning Talk. */
+export const postTalk = async (newTalk: Talk): Promise<FirebaseFirestore.WriteResult> => {
+
+    const collectionRef = firestore.getCollectionReference(firconstants.collectionTalks);
+    return collectionRef.doc(newTalk.id).set(Talk.objectToDocument(newTalk));
 }

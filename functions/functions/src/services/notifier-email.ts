@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as nodemailer from 'nodemailer';
 import * as constants from '../constants';
 
+/** Send an email. */
 export const sendEmail = async (receivers: string, subject: string, message: string): Promise<string> => {
 
     try {

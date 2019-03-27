@@ -1,4 +1,5 @@
 import * as functions from 'firebase-functions';
+import * as auth from './auth';
 
 /** 
  * Posts a reminder to the speakers via emails that the Talk is coming in few days.
@@ -7,5 +8,12 @@ import * as functions from 'firebase-functions';
  * Slack reminders will be an improvement.
  */
 export const send = async (request: functions.Request, response: functions.Response) => {
-    response.send("ok"); //TODO: implementation
+
+    try {
+        auth.verifyApikey(request);
+        response.send("ok"); //TODO: implementation
+    }
+    catch (err) {
+        response.send(err.message);
+    }
 }
